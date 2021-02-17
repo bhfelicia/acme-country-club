@@ -39,6 +39,20 @@ app.get("/api/bookings", async (req, res, next) => {
   }
 });
 
+app.get("/api/member_bookings", async (req, res, next) => {
+  try {
+    res.send(
+      await Booking.findAll({
+        attributes: {
+          exclude: ["startTime", "endTime", "createdAt", "updatedAt"],
+        },
+      })
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
 const init = async () => {
   try {
     await db.sync({ force: true });

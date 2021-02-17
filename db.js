@@ -54,6 +54,7 @@ Booking.init(
 Facility.hasMany(Booking);
 Booking.belongsTo(Facility);
 Booking.belongsTo(Member, { as: "bookedBy" });
+
 Member.hasMany(Booking, { foreignKey: "bookedById" });
 Member.belongsTo(Member, { as: "sponsor" });
 Member.hasMany(Member, { foreignKey: "sponsorId" });
