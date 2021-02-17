@@ -1,61 +1,51 @@
-const { Sequelize, DataTypes, Model, UUID, UUIDV4 } = require('sequelize');
-const db = new Sequelize(process.env.DATABASE_URL || 'postgres://localhost/acme_country_club');
-const express = require('express');
+const {
+  db,
+  Model: { Member, Booking, Facility },
+  seed,
+} = require("./db");
+const express = require("express");
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-class Member extends Model {};
-class Facility extends Model {};
-class Bookings extends Model {};
+app.get("/api/members", async (req, res, next) => {
+  try {
+    const mems = await Member.findAll({
+      include: [{ model: Member, as: "sponsor" }],
+    });
+    res.send(mems);
+  } catch (error) {
+    next(error);
+  }
+});
 
-Member.init({
-    id : {
-        type: UUID,
-       primaryKey: true,
-       defaultValue: UUIDV4 
-    },
-    first_name : {
-        type: DataTypes.STRING(20),
-        unique: true,
-        allowNull: false
+app.get("/api/facilities", async (req, res, next) => {
+  try {
+    const facilities = await Facility.findAll();
+    res.send(facilities);
+  } catch (error) {
+    next(error);
+  }
+});
 
-    }
-}, {sequelize:db, modelName:'members'});
-Facility.init({
-    id: {
-        type: UUID,
-        primaryKey:true,
-        defaultValue: UUIDV4
-    },
-    name : {
-        type: DataTypes.STRING(100),
-        unique: true,
-        allowNull: false
-    }
-}, {sequelize:db, modelName:'facilities'})
-Bookings.init({
-    startTime: {
-        type: DataTypes.DATE,
-        allowNull: false
-    },
-    endTime: {
-        type: DataTypes.DATE,
-        allowNull: false
-    },
-
-}, {sequelize:db, modelName:'bookings'});
-
-Facility.hasMany(Bookings);
-Bookings.belongsTo(Facility);
-Bookings.belongsTo(Member);
-Member.hasMany(Bookings);
-Member.belongsTo(Member, { as: 'sponsor'});
-Member.hasMany(Member, {foreignKey: 'sponsorId'})
+app.get("/api/bookings", async (req, res, next) => {
+  try {
+    const bookings = await Booking.findAll({
+      include: [Facility, { model: Member, as: "bookedBy" }],
+    });
+    res.send(bookings);
+  } catch (error) {
+    next(error);
+  }
+});
 
 const init = async () => {
-    await db.sync({ force: true});
-
-    app.listen(PORT, () => console.log(`app listening on port: ${PORT}`))
-}
+  try {
+    await db.sync({ force: true });
+    await seed();
+    app.listen(PORT, () => console.log(`app listening on port: ${PORT}`));
+  } catch (error) {
+    console.log(error);
+  }
+};
 init();
